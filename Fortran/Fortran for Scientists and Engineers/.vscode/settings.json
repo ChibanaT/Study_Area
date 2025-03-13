@@ -1,0 +1,6 @@
+{
+    "fortran.compilerPath": "C:/msys64/mingw64/bin/gfortran.exe",
+    "fortran.linter.compiler": "gfortran",
+    "fortran.linter.compilerPath": "C:/msys64/mingw64/bin/gfortran.exe",
+    "fortran.fortls.disabled": true
+}
