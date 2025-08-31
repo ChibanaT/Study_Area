@@ -1,0 +1,33 @@
+{
+  "C_Cpp_Runner.cCompilerPath": "gcc",
+  "C_Cpp_Runner.cppCompilerPath": "g++",
+  "C_Cpp_Runner.debuggerPath": "gdb",
+  "C_Cpp_Runner.cStandard": "c11",
+  "C_Cpp_Runner.cppStandard": "c++17",
+  "C_Cpp_Runner.enableWarnings": true,
+  "C_Cpp_Runner.warnings": [
+    "-Wall",
+    "-Wextra",
+    "-Wpedantic"
+  ],
+  "C_Cpp_Runner.compilerArgs": [],
+  "C_Cpp_Runner.linkerArgs": [],
+  "C_Cpp_Runner.includePaths": [],
+  "C_Cpp_Runner.includeSearch": [
+    "*",
+    "**/*"
+  ],
+  "C_Cpp_Runner.excludeSearch": [
+    "**/build",
+    "**/.vscode",
+    "**/.*/**"
+  ],
+  "code-runner.executorMap": {
+    "cpp": "g++ -std=c++17 -O2 $fileName -o $fileNameWithoutExt && ./$fileNameWithoutExt",
+    "c": "gcc -std=c11 -O2 $fileName -o $fileNameWithoutExt && ./$fileNameWithoutExt",
+    "fortran": "gfortran -O2 $fileName -o $fileNameWithoutExt && ./$fileNameWithoutExt"
+  },
+  "code-runner.runInTerminal": true,
+  "code-runner.saveFileBeforeRun": true,
+  "C_Cpp_Runner.msvcBatchPath": ""
+}
