@@ -38,7 +38,7 @@ int main() {
     fx_lower = expr::evaluate(cmath_expr,x_lower);
     fx_upper = expr::evaluate(cmath_expr,x_upper);
 
-    // Data log criation
+    // Data log creation
     std::ofstream data("regulafalsi_data.dat");
     data << expr << endl;
     data << setw(10) << "iteration" << setw(13) << "x lower" << setw(17) << "x upper" << setw(18) << "x middle" << setw(15) << "f(x)" << endl;
