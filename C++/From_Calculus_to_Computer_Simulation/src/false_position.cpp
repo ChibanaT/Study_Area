@@ -11,7 +11,7 @@ using namespace std;
 
 int main() {
 
-    cout << "================Regula Falsi Method================" << endl;
+    cout << "================False Position Method================" << endl;
     cout << "Enter the Function: " << endl;
     string expr;
     cin >> expr;
@@ -39,19 +39,19 @@ int main() {
     fx_upper = expr::evaluate(cmath_expr,x_upper);
 
     // Data log creation
-    std::ofstream data("regulafalsi_data.dat");
+    std::ofstream data("false_position_data.dat");
     data << expr << endl;
     data << setw(10) << "iteration" << setw(13) << "x lower" << setw(17) << "x upper" << setw(18) << "x middle" << setw(15) << "f(x)" << endl;
 
     // Plot script creation
-    ofstream script("plotregulafalsi.gp");
+    ofstream script("plotfalse_position.gp");
     script << "set title '" << expr << "'\n";
     script << "set xlabel 'x'\n";
     script << "set ylabel 'y'\n";
-    script << "plot 'regulafalsi_data.dat' skip 2 using 1:2 with linespoints title 'x Lower', \\\n"
-            << "    'regulafalsi_data.dat' skip 2 using 1:3 with linespoints title 'x Upper', \\\n"
-            << "    'regulafalsi_data.dat' skip 2 using 1:4 with linespoints title 'x Middle', \\\n"
-            << "    'regulafalsi_data.dat' skip 2 using 1:5 with linespoints title 'f(x)'\n";
+    script << "plot 'false_position_data.dat' skip 2 using 1:2 with linespoints title 'x Lower', \\\n"
+            << "    'false_position_data.dat' skip 2 using 1:3 with linespoints title 'x Upper', \\\n"
+            << "    'false_position_data.dat' skip 2 using 1:4 with linespoints title 'x Middle', \\\n"
+            << "    'false_position_data.dat' skip 2 using 1:5 with linespoints title 'f(x)'\n";
     script.close();
 
     // Signal verification
@@ -91,7 +91,7 @@ int main() {
 
     data.close();
 
-    system("gnuplot -persist plotregulafalsi.gp");
+    system("gnuplot -persist plotfalse_position.gp");
 
     
     return 0;
