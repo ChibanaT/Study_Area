@@ -1,6 +1,7 @@
 #include "../../include/linear_system.hpp"
 #include <chrono>
 #include <stdexcept>
+#include <cmath>
 
 namespace numerical {
 
@@ -43,7 +44,7 @@ LinearResult cramer(const std::vector<std::vector<double>>& A, const std::vector
 
     double detA = determinant(A);
     result.flop_count += n * n; // Rough estimate
-    if (detA == 0.0) {
+    if (std::fabs(detA) < 1e-12) {
         result.solution = std::vector<double>(n, 0.0);
         result.converged = false;
     } else {

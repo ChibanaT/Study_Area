@@ -1,0 +1,84 @@
+#include "../../include/linear_system.hpp"
+#include <chrono>
+#include <stdexcept>
+#include <cmath>
+#include <vector>
+
+namespace numerical {
+
+//----------------------------
+// Successive Over-Relaxation (SOR) Method
+//----------------------------
+LinearResult sor(const std::vector<std::vector<double>>& A_in, const std::vector<double>& b_in, int max_iter, double tol, double omega) {
+    auto start_time = std::chrono::high_resolution_clock::now();
+
+    LinearResult result;
+    result.iterations = 0;
+    result.converged = false;
+    result.flop_count = 0;
+
+    int n = A_in.size();
+    if (n == 0 || A_in[0].size() != n || b_in.size() != n)
+        throw std::invalid_argument("Matrix A must be square and vector b compatible");
+
+    if (omega <= 0.0 || omega >= 2.0)
+        throw std::invalid_argument("Relaxation parameter omega must be in (0, 2)");
+
+    // Initialize solution vector
+    result.solution.resize(n, 0.0);
+    std::vector<double> x_old(n, 0.0);
+
+    // Check diagonal dominance (warning only, not required)
+    for (int i = 0; i < n; ++i) {
+        if (std::fabs(A_in[i][i]) < 1e-12)
+            throw std::runtime_error("Zero diagonal element encountered in SOR method");
+    }
+
+    for (int iter = 0; iter < max_iter; ++iter) {
+        // Store old values for convergence check
+        x_old = result.solution;
+
+        // Compute new approximation using SOR formula
+        for (int i = 0; i < n; ++i) {
+            double sum = 0.0;
+            for (int j = 0; j < n; ++j) {
+                if (i != j) {
+                    sum += A_in[i][j] * result.solution[j];
+                    result.flop_count += 2; // multiply + add
+                }
+            }
+            // SOR update: x_i = (1 - omega) * x_i_old + omega * (b_i - sum) / A_ii
+            double gauss_seidel = (b_in[i] - sum) / A_in[i][i];
+            result.solution[i] = (1.0 - omega) * x_old[i] + omega * gauss_seidel;
+            result.flop_count += 5; // subtraction, division, multiplications, addition
+        }
+
+        ++result.iterations;
+
+        // Check convergence: ||x_new - x_old|| < tol
+        double error = 0.0;
+        for (int i = 0; i < n; ++i) {
+            double diff = std::fabs(result.solution[i] - x_old[i]);
+            if (diff > error) error = diff;
+            result.flop_count += 1; // subtraction and comparison
+        }
+
+        if (error < tol) {
+            result.converged = true;
+            auto end_time = std::chrono::high_resolution_clock::now();
+            std::chrono::duration<double> elapsed = end_time - start_time;
+            result.cpu_time_sec = elapsed.count();
+            return result;
+        }
+    }
+
+    // If not converged
+    auto end_time = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> elapsed = end_time - start_time;
+    result.cpu_time_sec = elapsed.count();
+
+    return result;
+}
+
+} // namespace numerical
+

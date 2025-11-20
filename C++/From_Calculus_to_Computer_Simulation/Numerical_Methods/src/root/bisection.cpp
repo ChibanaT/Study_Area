@@ -45,7 +45,7 @@ RootResult bisect(const Func &f, double a, double b, double tol, int max_iter){
         c = 0.5 * (a + b);
         result.history.push_back(c);
         double fc = f(c);
-        result.flop_count +=3; 
+        result.flop_count += 3; // 1 addition (a+b), 1 multiplication (0.5*), 1 function call
         ++result.iterations;
         if (std::fabs(fc) < tol || 0.5 * (b - a) < tol){
             result.root = c;

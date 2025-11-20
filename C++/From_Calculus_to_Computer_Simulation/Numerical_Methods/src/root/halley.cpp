@@ -7,7 +7,7 @@
 
 namespace numerical {
 
-RootResult halley(const Func &f, const Func &df, const Func &ddf, double x0, double tol, int max_iter) {
+RootResult halley(const Func &f, const Func &df, const Func &d2f, double x0, double tol, int max_iter) {
 
     auto start_time = std::chrono::high_resolution_clock::now();
 
@@ -19,7 +19,7 @@ RootResult halley(const Func &f, const Func &df, const Func &ddf, double x0, dou
     double x = x0;
     double fx = f(x);
     double dfx = df(x);
-    double ddfx = ddf(x);
+    double ddfx = d2f(x);
     result.flop_count += 3;
 
     for (int k = 0; k < max_iter; ++k) {
@@ -54,7 +54,7 @@ RootResult halley(const Func &f, const Func &df, const Func &ddf, double x0, dou
         x = x_next;
         fx = fx_next;
         dfx = df(x);
-        ddfx = ddf(x);
+        ddfx = d2f(x);
         result.flop_count += 2; // derivative evaluations
     }
 
