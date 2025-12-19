@@ -1,9 +1,10 @@
 #!/bin/bash
 
-# Compile test.cpp with all root finding and linear system source files
+# Compile test.cpp with all numerical methods source files
+# Includes: root finding, linear systems, interpolation, ODE solvers, and optimization
 
 # Compiler flags
-CXX_FLAGS="-std=c++17 -Wall -Wextra -O2"
+CXX_FLAGS="-std=c++17 -Wall -Wextra -O2 -I."
 
 # Root finding source files
 ROOT_SOURCES=(
@@ -34,9 +35,38 @@ LINEAR_SOURCES=(
     "src/linear_system/conjugate_gradient.cpp"
 )
 
+# Interpolation source files
+INTERPOLATION_SOURCES=(
+    "src/interpolation/linear_interpolation.cpp"
+    "src/interpolation/lagrange_polynomial.cpp"
+    "src/interpolation/newton_divided_difference.cpp"
+    "src/interpolation/cubic_spline.cpp"
+)
+
+# ODE solver source files
+ODE_SOURCES=(
+    "src/ode_solver/euler.cpp"
+    "src/ode_solver/rk4.cpp"
+    "src/ode_solver/rk45.cpp"
+    "src/ode_solver/rk78.cpp"
+    "src/ode_solver/bdf.cpp"
+    "src/ode_solver/radau.cpp"
+)
+
+# Optimization source files
+OPTIMIZATION_SOURCES=(
+    "src/optimization/steepest_descent.cpp"
+    "src/optimization/bfgs.cpp"
+    "src/optimization/simplex.cpp"
+    "src/optimization/sqp.cpp"
+    "src/optimization/lagrange_multipliers.cpp"
+    "src/optimization/genetic_algorithm.cpp"
+    "src/optimization/pso.cpp"
+)
+
 # Combine all source files into an array
 ALL_SOURCES=("test.cpp")
-for file in "${ROOT_SOURCES[@]}" "${LINEAR_SOURCES[@]}"; do
+for file in "${ROOT_SOURCES[@]}" "${LINEAR_SOURCES[@]}" "${INTERPOLATION_SOURCES[@]}" "${ODE_SOURCES[@]}" "${OPTIMIZATION_SOURCES[@]}"; do
     if [ ! -f "$file" ]; then
         echo "Warning: Source file not found: $file"
     else
@@ -45,9 +75,16 @@ for file in "${ROOT_SOURCES[@]}" "${LINEAR_SOURCES[@]}"; do
 done
 
 # Compile
-echo "Compiling test.cpp with all source files..."
+echo "Compiling test.cpp with all numerical methods..."
 echo "Using compiler flags: $CXX_FLAGS"
-echo "Total source files: ${#ALL_SOURCES[@]}"
+echo ""
+echo "Source files breakdown:"
+echo "  - Root finding: ${#ROOT_SOURCES[@]} files"
+echo "  - Linear systems: ${#LINEAR_SOURCES[@]} files"
+echo "  - Interpolation: ${#INTERPOLATION_SOURCES[@]} files"
+echo "  - ODE solvers: ${#ODE_SOURCES[@]} files"
+echo "  - Optimization: ${#OPTIMIZATION_SOURCES[@]} files"
+echo "  - Total: ${#ALL_SOURCES[@]} files (including test.cpp)"
 echo ""
 
 g++ $CXX_FLAGS "${ALL_SOURCES[@]}" -o test.exe

@@ -1,5 +1,8 @@
 #include "include/root.hpp"
 #include "include/linear_system.hpp"
+#include "include/interpolation.hpp"
+#include "include/ode_solver.hpp"
+#include "include/optimization.hpp"
 #include <iostream>
 #include <vector>
 #include <string>
@@ -19,6 +22,9 @@ int main() {
     cout << "Choose an option:\n";
     cout << "1. Solve a linear system\n";
     cout << "2. Find roots of a polynomial\n";
+    cout << "3. Interpolation\n";
+    cout << "4. ODE Solver\n";
+    cout << "5. Optimization\n";
     int choice;
     cin >> choice;
 
@@ -220,6 +226,221 @@ int main() {
             cout << "History of approximations:\n";
             for (size_t i = 0; i < res.history.size(); ++i)
                 cout << "Iter " << i+1 << ": " << res.history[i] << "\n";
+            cout << "====================================================\n";
+
+        } catch (const exception &e) {
+            cout << "Error: " << e.what() << "\n";
+        }
+
+    } else if (choice == 3) {
+        // ---------------- Interpolation ----------------
+        int n;
+        cout << "Enter the number of data points: ";
+        cin >> n;
+
+        if (n < 2) {
+            cout << "At least 2 points required\n";
+            return 0;
+        }
+
+        vector<double> x_data(n), y_data(n);
+        cout << "Enter x values: ";
+        for (int i = 0; i < n; ++i) cin >> x_data[i];
+        cout << "Enter y values: ";
+        for (int i = 0; i < n; ++i) cin >> y_data[i];
+
+        int n_query;
+        cout << "Enter number of query points: ";
+        cin >> n_query;
+        vector<double> x_query(n_query);
+        cout << "Enter query x values: ";
+        for (int i = 0; i < n_query; ++i) cin >> x_query[i];
+
+        cout << "Choose interpolation method:\n";
+        cout << "1. Linear Interpolation\n";
+        cout << "2. Lagrange Polynomial\n";
+        cout << "3. Newton Divided Difference\n";
+        cout << "4. Cubic Spline\n";
+
+        int method;
+        cin >> method;
+
+        try {
+            InterpolationResult res;
+            double left_deriv = 0.0, right_deriv = 0.0;
+
+            switch (method) {
+                case 1: res = linear_interpolation(x_data, y_data, x_query); break;
+                case 2: res = lagrange_polynomial(x_data, y_data, x_query); break;
+                case 3: res = newton_divided_difference(x_data, y_data, x_query); break;
+                case 4: {
+                    cout << "Enter left boundary derivative (0 for natural): ";
+                    cin >> left_deriv;
+                    cout << "Enter right boundary derivative (0 for natural): ";
+                    cin >> right_deriv;
+                    res = cubic_spline(x_data, y_data, x_query, left_deriv, right_deriv);
+                    break;
+                }
+                default: throw invalid_argument("Invalid method selection");
+            }
+
+            cout << "\n================ Interpolation Result ================\n";
+            cout << "Success: " << (res.success ? "Yes" : "No") << "\n";
+            cout << "CPU time (s): " << res.cpu_time_sec << "\n";
+            cout << "FLOP count: " << res.flop_count << "\n";
+            cout << "Interpolated values:\n";
+            for (size_t i = 0; i < res.interpolated_values.size(); ++i)
+                cout << "f(" << x_query[i] << ") = " << res.interpolated_values[i] << "\n";
+            cout << "====================================================\n";
+
+        } catch (const exception &e) {
+            cout << "Error: " << e.what() << "\n";
+        }
+
+    } else if (choice == 4) {
+        // ---------------- ODE Solver ----------------
+        cout << "Choose ODE solver method:\n";
+        cout << "1. Euler\n";
+        cout << "2. Runge-Kutta 4th Order (RK4)\n";
+        cout << "3. Runge-Kutta-Fehlberg 4(5) (RK45)\n";
+        cout << "4. Runge-Kutta 7(8) (RK78)\n";
+        cout << "5. Backward Differentiation Formula (BDF)\n";
+        cout << "6. Radau\n";
+
+        int method;
+        cin >> method;
+
+        double t0, y0, t_end, h;
+        cout << "Enter initial time t0: "; cin >> t0;
+        cout << "Enter initial value y0: "; cin >> y0;
+        cout << "Enter final time t_end: "; cin >> t_end;
+        cout << "Enter step size h: "; cin >> h;
+
+        // Simple ODE: dy/dt = -y (exponential decay)
+        ODEFunc f = [](double t, double y) { return -y; };
+
+        try {
+            ODEResult res;
+            double tolerance = 1e-6;
+
+            switch (method) {
+                case 1: res = euler(f, t0, y0, t_end, h); break;
+                case 2: res = rk4(f, t0, y0, t_end, h); break;
+                case 3: res = rk45(f, t0, y0, t_end, h, tolerance); break;
+                case 4: res = rk78(f, t0, y0, t_end, h, tolerance); break;
+                case 5: res = bdf(f, t0, y0, t_end, h, 2); break;
+                case 6: res = radau(f, t0, y0, t_end, h, tolerance); break;
+                default: throw invalid_argument("Invalid method selection");
+            }
+
+            cout << "\n================ ODE Solver Result ================\n";
+            cout << "Converged: " << (res.converged ? "Yes" : "No") << "\n";
+            cout << "Steps: " << res.steps << "\n";
+            cout << "CPU time (s): " << res.cpu_time_sec << "\n";
+            cout << "FLOP count: " << res.flop_count << "\n";
+            cout << "Max error: " << res.max_error << "\n";
+            cout << "Final value: y(" << t_end << ") = " << res.solution_single.back() << "\n";
+            cout << "====================================================\n";
+
+        } catch (const exception &e) {
+            cout << "Error: " << e.what() << "\n";
+        }
+
+    } else if (choice == 5) {
+        // ---------------- Optimization ----------------
+        cout << "Choose optimization method:\n";
+        cout << "1. Steepest Descent\n";
+        cout << "2. BFGS\n";
+        cout << "3. Simplex (Linear Programming)\n";
+        cout << "4. Sequential Quadratic Programming (SQP)\n";
+        cout << "5. Lagrange Multipliers\n";
+        cout << "6. Genetic Algorithm\n";
+        cout << "7. Particle Swarm Optimization (PSO)\n";
+
+        int method;
+        cin >> method;
+
+        int dim;
+        cout << "Enter dimension: ";
+        cin >> dim;
+
+        vector<double> x0(dim);
+        cout << "Enter initial point: ";
+        for (int i = 0; i < dim; ++i) cin >> x0[i];
+
+        // Simple objective: f(x) = sum(x_i^2)
+        ObjectiveFunc f = [](const vector<double>& x) {
+            double sum = 0.0;
+            for (double xi : x) sum += xi * xi;
+            return sum;
+        };
+
+        GradientFunc grad_f = [](const vector<double>& x) {
+            vector<double> grad(x.size());
+            for (size_t i = 0; i < x.size(); ++i) grad[i] = 2.0 * x[i];
+            return grad;
+        };
+
+        try {
+            OptimizationResult res;
+            double tolerance = 1e-6;
+            int max_iter = 1000;
+
+            switch (method) {
+                case 1: {
+                    double step_size;
+                    cout << "Enter step size: "; cin >> step_size;
+                    res = steepest_descent(f, grad_f, x0, step_size, tolerance, max_iter);
+                    break;
+                }
+                case 2: res = bfgs(f, grad_f, x0, tolerance, max_iter); break;
+                case 3: {
+                    vector<double> c(dim, 1.0);
+                    vector<vector<double>> A;
+                    vector<double> b;
+                    vector<string> constraint_type;
+                    res = simplex(c, A, b, constraint_type, x0);
+                    break;
+                }
+                case 4: {
+                    vector<ConstraintFunc> constraints;
+                    vector<GradientFunc> grad_constraints;
+                    res = sqp(f, grad_f, constraints, grad_constraints, x0, tolerance, max_iter);
+                    break;
+                }
+                case 5: {
+                    vector<ConstraintFunc> equality_constraints;
+                    vector<GradientFunc> grad_equality_constraints;
+                    res = lagrange_multipliers(f, grad_f, equality_constraints, grad_equality_constraints, x0, tolerance, max_iter);
+                    break;
+                }
+                case 6: {
+                    vector<double> lower_bounds(dim, -10.0);
+                    vector<double> upper_bounds(dim, 10.0);
+                    res = genetic_algorithm(f, dim, lower_bounds, upper_bounds, 50, 100, 0.1, 0.8);
+                    break;
+                }
+                case 7: {
+                    vector<double> lower_bounds(dim, -10.0);
+                    vector<double> upper_bounds(dim, 10.0);
+                    res = pso(f, dim, lower_bounds, upper_bounds, 30, 100, 0.7, 1.5, 1.5);
+                    break;
+                }
+                default: throw invalid_argument("Invalid method selection");
+            }
+
+            cout << "\n================ Optimization Result ================\n";
+            cout << "Converged: " << (res.converged ? "Yes" : "No") << "\n";
+            cout << "Iterations: " << res.iterations << "\n";
+            cout << "CPU time (s): " << res.cpu_time_sec << "\n";
+            cout << "FLOP count: " << res.flop_count << "\n";
+            cout << "Optimal value: " << res.optimal_value << "\n";
+            cout << "Optimal point: [";
+            for (size_t i = 0; i < res.optimal_point.size(); ++i) {
+                cout << res.optimal_point[i];
+                if (i < res.optimal_point.size() - 1) cout << ", ";
+            }
+            cout << "]\n";
             cout << "====================================================\n";
 
         } catch (const exception &e) {

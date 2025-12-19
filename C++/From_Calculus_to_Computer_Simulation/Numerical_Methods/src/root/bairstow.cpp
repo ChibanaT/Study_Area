@@ -29,8 +29,8 @@ RootResult bairstow(const std::vector<double>& coeffs, double r, double s, doubl
         throw std::invalid_argument("Polynomial degree must be >= 2 for Bairstow method");
 
     std::vector<double> a = coeffs; // working copy
-    std::vector<double> b(n+1);
-    std::vector<double> c(n+1);
+    std::vector<double> b(n+1, 0.0);
+    std::vector<double> c(n+1, 0.0);
     double dr = 0.0, ds = 0.0;
 
     for (int iter = 0; iter < max_iter; ++iter) {
@@ -51,20 +51,26 @@ RootResult bairstow(const std::vector<double>& coeffs, double r, double s, doubl
         result.flop_count += 3 * n; // rough estimate
 
         // Compute corrections dr, ds using Newton's method
-        // Solve: c[1]*dr + c[2]*ds = -b[0]
-        //        c[2]*dr + c[3]*ds = -b[1]
-        // For n=2, we need to handle the case where c[3] might not exist
-        // Use c[2] as fallback or ensure proper indexing
-        double c1 = (n >= 1) ? c[1] : 0.0;
-        double c2 = (n >= 2) ? c[2] : 0.0;
-        double c3 = (n >= 3) ? c[3] : c[2]; // For n=2, use c[2] as approximation
+        // The system to solve is:
+        // c[n-1]*dr + c[n-2]*ds = -b[0]
+        // c[n-2]*dr + c[n-3]*ds = -b[1]
+        // But we need to use the correct indices for the derivatives
+        double c1 = (n >= 1) ? c[n-1] : 0.0;  // dc/dr
+        double c2 = (n >= 2) ? c[n-2] : 0.0;  // dc/ds  
+        double c3 = (n >= 2) ? c[n-2] : 0.0;  // same as c2 for second equation
+        double c4 = (n >= 3) ? c[n-3] : 0.0;  // second derivative term
         
-        double det = c1*c3 - c2*c2;
-        if (std::fabs(det) < 1e-14)
-            throw std::runtime_error("Determinant too small in Bairstow iteration");
-
-        dr = (-b[0]*c3 + b[1]*c2) / det;
-        ds = (-b[1]*c1 + b[0]*c2) / det;
+        // Solve the 2x2 system: [c1 c2] [dr]   [-b[0]]
+        //                       [c2 c4] [ds] = [-b[1]]
+        double det = c1*c4 - c2*c2;
+        if (std::fabs(det) < 1e-14) {
+            // If determinant is too small, use a simpler update
+            dr = -b[0] * 0.1;
+            ds = -b[1] * 0.1;
+        } else {
+            dr = (-b[0]*c4 + b[1]*c2) / det;
+            ds = (-b[1]*c1 + b[0]*c2) / det;
+        }
         result.flop_count += 8; // multiplications, additions, divisions
 
         r += dr;
@@ -74,16 +80,20 @@ RootResult bairstow(const std::vector<double>& coeffs, double r, double s, doubl
         // Check convergence
         if (std::fabs(dr) < tol && std::fabs(ds) < tol) {
             // Roots of quadratic factor x^2 - r x - s = 0
+            // Using quadratic formula: x = (r ± sqrt(r^2 + 4s)) / 2
             double disc = r*r + 4*s;
             if (disc >= 0) {
-                result.root = 0.5 * (r + std::sqrt(disc));
-                result.history.push_back(result.root);
-                result.history.push_back(0.5 * (r - std::sqrt(disc)));
+                double sqrt_disc = std::sqrt(disc);
+                double root1 = 0.5 * (r + sqrt_disc);
+                double root2 = 0.5 * (r - sqrt_disc);
+                result.root = root1;
+                result.history.push_back(root1);
+                result.history.push_back(root2);
             } else {
-                // complex roots
-                result.root = r / 2.0; // return real part of first root
-                result.history.push_back(r / 2.0 + std::sqrt(-disc)/2.0); // complex part in history
-                result.history.push_back(r / 2.0 - std::sqrt(-disc)/2.0);
+                // complex roots - return real part
+                result.root = r / 2.0;
+                result.history.push_back(r / 2.0);
+                result.history.push_back(r / 2.0);
             }
 
             result.converged = true;
@@ -91,10 +101,27 @@ RootResult bairstow(const std::vector<double>& coeffs, double r, double s, doubl
             result.cpu_time_sec = std::chrono::duration<double>(end_time - start_time).count();
             return result;
         }
+        
+        // Prevent divergence
+        if (std::fabs(dr) > 10.0 || std::fabs(ds) > 10.0 || std::isnan(dr) || std::isnan(ds)) {
+            break;
+        }
     }
 
-    // If not converged
-    result.root = r; // approximate
+    // If not converged, try to extract a root from the last iteration
+    // Roots of quadratic factor x^2 - r x - s = 0
+    double disc = r*r + 4*s;
+    if (disc >= 0 && !std::isnan(r) && !std::isnan(s)) {
+        double sqrt_disc = std::sqrt(disc);
+        result.root = 0.5 * (r + sqrt_disc);
+        result.history.push_back(result.root);
+        result.history.push_back(0.5 * (r - sqrt_disc));
+        result.converged = false; // Mark as not converged but return best guess
+    } else {
+        result.root = 0.0;
+        result.converged = false;
+    }
+    
     auto end_time = std::chrono::high_resolution_clock::now();
     result.cpu_time_sec = std::chrono::duration<double>(end_time - start_time).count();
     return result;
